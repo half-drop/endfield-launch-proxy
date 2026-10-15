@@ -6,13 +6,13 @@
 
 ## 使用
 
-1. 下载 Release 中的 `明日方舟：终末地.exe`，或下载 Windows 压缩包后解压。
+1. 下载 Release 中的 Windows 压缩包，解压得到准确文件名 `明日方舟：终末地.exe`。也可单独下载 `EndfieldLaunchProxy.exe` 后改名。
 2. 确保游戏和鹰角官方启动器已正常安装，并已通过官方启动器完成必要更新。
 3. 双击 EXE。已有游戏、启动器或更新器运行时，代理静默退出，保留现有进程。
 
 默认游戏位置：`D:\Hypergryph Launcher\games\Arknights Endfield\Endfield.exe`。移动代理本身不会影响此路径；其他安装位置可在快捷方式中加参数 `--game="完整路径\Endfield.exe"`。
 
-全程不显示代理窗口、控制台或通知。错误写入 `%LOCALAPPDATA%\EndfieldLaunchProxy\launch.log`，不弹窗。需要额外权限时静默退出，不请求 UAC，不修改系统设置。游戏自身的窗口、登录和服务端认证照常进行。
+全程不显示代理窗口、控制台或通知。错误写入 `%LOCALAPPDATA%\EndfieldLaunchProxy\launch.log`，不弹窗。当前官方程序需要管理员权限；代理在创建进程前检查现有令牌，权限不足、令牌受限或查询失败时直接静默退出，不请求 UAC，不修改系统设置。游戏自身的窗口、登录和服务端认证照常进行。
 
 ## 实现与边界
 
@@ -41,9 +41,11 @@ Actions 验证原生 x64 GUI 格式、完整图标、版本信息、清单、系
 ```powershell
 ./scripts/Build.ps1
 ./scripts/Verify.ps1
-./scripts/Package.ps1 -Version v1.0.1
+./scripts/Package.ps1 -Version v1.0.2
 ```
 
-编译使用 `/MT` 静态运行库和 Windows GUI 子系统，输出到 `dist/`。`v*` 标签触发 GitHub Actions，构建、验证、打包成功后，发布同一次构建的 EXE、Windows 压缩包、源码包、构建信息和 SHA-256 校验文件。
+编译使用 `/MT` 静态运行库和 Windows GUI 子系统，输出到 `dist/`。`v*` 标签触发 GitHub Actions，构建、验证、打包成功后，先上传草稿，核对 GitHub 实际附件名称与全部 SHA-256，再公开同一次构建的产物。
+
+GitHub 会清洗中文附件名，因此 Release 的单独 EXE 采用 `EndfieldLaunchProxy.exe`。ZIP 内保留 `明日方舟：终末地.exe`，两者字节完全一致；文件内部版本信息仍使用准确中文名称。`SHA256SUMS.txt` 对应实际下载附件名称。这一限制来自 [GitHub Release 资产规则](https://docs.github.com/en/rest/releases/assets#upload-a-release-asset)。
 
 独立代理源码采用 [MIT 许可证](LICENSE)。游戏图标及相关名称归各自权利人所有，见 [第三方说明](THIRD_PARTY_NOTICES.md)。本项目与鹰角网络无官方关联。

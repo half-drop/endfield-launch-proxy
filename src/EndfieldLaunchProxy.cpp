@@ -77,6 +77,18 @@ static std::wstring MutexName(){
  std::wstring identity=gamePath.wstring();Handle token;HANDLE raw=nullptr;if(OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&raw)){token.reset(raw);DWORD n=0;GetTokenInformation(token.value,TokenUser,nullptr,0,&n);std::vector<BYTE> data(n);if(n&&GetTokenInformation(token.value,TokenUser,data.data(),n,&n)){LPWSTR sid=nullptr;if(ConvertSidToStringSidW(((TOKEN_USER*)data.data())->User.Sid,&sid)){identity+=sid;LocalFree(sid);}}}
  unsigned long long hash=14695981039346656037ULL;for(auto c:identity){hash^=(unsigned short)towlower(c);hash*=1099511628211ULL;}wchar_t name[80]{};swprintf_s(name,L"Local\\EndfieldLaunchProxy_%016llX",hash);return name;
 }
+static bool HasRequiredToken(){
+ HANDLE raw=nullptr;
+ if(!OpenProcessToken(GetCurrentProcess(),TOKEN_QUERY,&raw))return false;
+ Handle token(raw);TOKEN_ELEVATION elevation{};DWORD bytes=0;
+ if(!GetTokenInformation(token.value,TokenElevation,&elevation,sizeof(elevation),&bytes))return false;
+ // The installed official images requireAdministrator. Reject before executing their bootstrap code.
+ if(!elevation.TokenIsElevated){SetLastError(ERROR_ELEVATION_REQUIRED);return false;}
+ SetLastError(ERROR_SUCCESS);BOOL restricted=IsTokenRestricted(token.value);DWORD restrictionError=GetLastError();
+ if(restricted){SetLastError(ERROR_ACCESS_DENIED);return false;}
+ if(restrictionError!=ERROR_SUCCESS){SetLastError(restrictionError);return false;}
+ return true;
+}
 struct Parent {
  Handle process,job;DWORD pid=0;
  bool Start(const fs::path&exe){
@@ -109,9 +121,10 @@ static int Run(){
  PWSTR local=nullptr;if(SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData,KF_FLAG_DEFAULT,nullptr,&local))){logPath=fs::path(local)/L"EndfieldLaunchProxy"/L"launch.log";CoTaskMemFree(local);}
  if(!Parse())return Fail(10,L"invalid_options");
  Handle mutex(CreateMutexW(nullptr,FALSE,MutexName().c_str()));DWORD mutexError=GetLastError();if(!mutex.valid())return Fail(11,L"mutex_unavailable",mutexError);if(mutexError==ERROR_ALREADY_EXISTS){Log(L"SKIP duplicate_proxy");return 2;}
- Log(L"BEGIN version=1.0.1 mode=suspended_official_parent");
+ Log(L"BEGIN version=1.0.2 mode=suspended_official_parent");
  std::error_code ec;if(!fs::is_regular_file(gamePath,ec))return Fail(12,L"game_file_missing");
  if(ExistingProcess(L"Endfield.exe",gamePath,false)){Log(L"SKIP game_already_running");return 3;}
+ if(!HasRequiredToken())return Fail(16,L"required_elevated_token_unavailable",GetLastError());
  fs::path root;auto launcher=FindLauncher(root);if(launcher.empty())return Fail(13,L"trusted_official_launcher_not_found");
  if(ExistingProcess(L"Games.exe",root,true)||ExistingProcess(L"Launcher.exe",root,true)||ExistingProcess(L"Updater.exe",root,true)){Log(L"SKIP existing_official_launcher_or_updater");return 4;}
  Handle imageLock(CreateFileW(launcher.c_str(),GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr));if(!imageLock.valid())return Fail(14,L"official_launcher_busy",GetLastError());

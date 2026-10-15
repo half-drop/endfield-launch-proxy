@@ -4,8 +4,8 @@
 101 ICON "../assets/endfield.ico"
 
 1 VERSIONINFO
- FILEVERSION 1,0,1,0
- PRODUCTVERSION 1,0,1,0
+ FILEVERSION 1,0,2,0
+ PRODUCTVERSION 1,0,2,0
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
  FILEFLAGS 0
  FILEOS VOS_NT_WINDOWS32
@@ -18,11 +18,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "half-drop"
             VALUE "FileDescription", "明日方舟：终末地 启动代理"
-            VALUE "FileVersion", "1.0.1.0"
+            VALUE "FileVersion", "1.0.2.0"
             VALUE "InternalName", "EndfieldLaunchProxy"
             VALUE "OriginalFilename", "明日方舟：终末地.exe"
             VALUE "ProductName", "Endfield Launch Proxy"
-            VALUE "ProductVersion", "1.0.1.0"
+            VALUE "ProductVersion", "1.0.2.0"
             VALUE "LegalCopyright", "Independent proxy: MIT; game icon: Hypergryph"
         END
     END

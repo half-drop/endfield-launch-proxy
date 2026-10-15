@@ -34,7 +34,12 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Endfield-Launch-Proxy-Windows-x64
-          path: dist/*
+          path: |
+            dist/EndfieldLaunchProxy.exe
+            dist/明日方舟：终末地.exe
+            dist/*.zip
+            dist/build-info.json
+            dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
   release:
@@ -67,9 +72,22 @@ jobs:
             $actual = (Get-FileHash -LiteralPath (Join-Path 'dist' $name) -Algorithm SHA256).Hash.ToLowerInvariant()
             if ($actual -cne $expected) { throw "Checksum failed: $name" }
           }
-          $expectedNames = @('明日方舟：终末地.exe', "EndfieldLaunchProxy-$env:RELEASE_TAG-windows-x64.zip", "EndfieldLaunchProxy-$env:RELEASE_TAG-source.zip", 'build-info.json', 'SHA256SUMS.txt')
+          $canonical = Join-Path 'dist' '明日方舟：终末地.exe'
+          $releaseExe = Join-Path 'dist' 'EndfieldLaunchProxy.exe'
+          if ((Get-FileHash -LiteralPath $canonical -Algorithm SHA256).Hash -cne (Get-FileHash -LiteralPath $releaseExe -Algorithm SHA256).Hash) { throw 'Canonical and release executables differ.' }
+          $expectedNames = @('EndfieldLaunchProxy.exe', "EndfieldLaunchProxy-$env:RELEASE_TAG-windows-x64.zip", "EndfieldLaunchProxy-$env:RELEASE_TAG-source.zip", 'build-info.json', 'SHA256SUMS.txt')
           $foundNames = @(Get-ChildItem -LiteralPath 'dist' -File | ForEach-Object { $_.Name })
-          if (Compare-Object $expectedNames $foundNames -CaseSensitive) { throw 'Unexpected release asset set.' }
+          if (Compare-Object ($expectedNames + '明日方舟：终末地.exe') $foundNames -CaseSensitive) { throw 'Unexpected build artifact set.' }
           $assets = $expectedNames | ForEach-Object { Join-Path 'dist' $_ }
-          gh release create $env:RELEASE_TAG --repo $env:GH_REPO --verify-tag --title "终末地启动代理 $env:RELEASE_TAG" --notes-file docs/RELEASE_NOTES.md @assets
+          gh release create $env:RELEASE_TAG --repo $env:GH_REPO --verify-tag --draft --title "终末地启动代理 $env:RELEASE_TAG" --notes-file docs/RELEASE_NOTES.md @assets
+          if ($LASTEXITCODE -ne 0) { throw "Draft release creation failed: $LASTEXITCODE" }
+          $releaseJson = gh release view $env:RELEASE_TAG --repo $env:GH_REPO --json assets
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to verify uploaded assets.' }
+          $remoteAssets = @(($releaseJson | ConvertFrom-Json).assets)
+          if (Compare-Object $expectedNames @($remoteAssets | ForEach-Object { $_.name }) -CaseSensitive) { throw 'GitHub changed the release asset names.' }
+          foreach ($asset in $remoteAssets) {
+            $hash = (Get-FileHash -LiteralPath (Join-Path 'dist' $asset.name) -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($asset.state -ne 'uploaded' -or $asset.digest -cne "sha256:$hash") { throw "Remote asset integrity failed: $($asset.name)" }
+          }
+          gh release edit $env:RELEASE_TAG --repo $env:GH_REPO --draft=false --latest
           if ($LASTEXITCODE -ne 0) { throw "Release publication failed: $LASTEXITCODE" }

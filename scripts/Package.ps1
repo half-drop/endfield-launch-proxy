@@ -10,6 +10,7 @@ $repository = [IO.Path]::GetFullPath($RepositoryRoot)
 $dist = Join-Path $repository 'dist'
 $exeName = '明日方舟：终末地.exe'
 $exe = Join-Path $dist $exeName
+$releaseExeName = 'EndfieldLaunchProxy.exe'
 if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw 'Build the executable before packaging.' }
 $fileVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($exe).FileVersion
 if ($fileVersion -ne ($Version.Substring(1) + '.0')) { throw 'Tag version and executable version do not match.' }
@@ -28,6 +29,7 @@ $zipInputs = foreach ($file in $packFiles) {
 }
 $windowsName = "EndfieldLaunchProxy-$Version-windows-x64.zip"
 Compress-Archive -LiteralPath $zipInputs -DestinationPath (Join-Path $dist $windowsName) -CompressionLevel Optimal -Force
+Copy-Item -LiteralPath $exe -Destination (Join-Path $dist $releaseExeName) -Force
 Push-Location $repository
 try {
     $commit = (& git rev-parse HEAD).Trim()
@@ -42,6 +44,7 @@ $info = [ordered]@{
     commit = $commit
     platform = 'windows-x64'
     executable = $exeName
+    releaseExecutable = $releaseExeName
     runtime = 'native Win32, MSVC static CRT (/MT), Windows system DLLs'
     configuration = 'Release GUI, asInvoker'
     iconSha256 = (Get-FileHash -LiteralPath (Join-Path $repository 'assets/endfield.ico') -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -51,7 +54,7 @@ $info = [ordered]@{
     repository = $env:GITHUB_REPOSITORY
 }
 [IO.File]::WriteAllText((Join-Path $dist 'build-info.json'), ($info | ConvertTo-Json -Depth 3), [Text.UTF8Encoding]::new($false))
-$releaseFiles = @($exeName, $windowsName, $sourceName, 'build-info.json')
+$releaseFiles = @($releaseExeName, $windowsName, $sourceName, 'build-info.json')
 $sums = foreach ($name in $releaseFiles) {
     $hash = (Get-FileHash -LiteralPath (Join-Path $dist $name) -Algorithm SHA256).Hash.ToLowerInvariant()
     "$hash  $name"

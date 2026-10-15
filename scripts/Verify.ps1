@@ -63,9 +63,9 @@ if (-not $importTerminator -or $imports.Count -eq 0) { throw 'Invalid or empty P
 if ([BitConverter]::ToUInt32($bytes, $optionalHeader + 112 + 13 * 8) -ne 0) { throw 'Unexpected delay-import table; review its dependencies before release.' }
 
 $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($exe)
-if ($version.FileMajorPart -ne 1 -or $version.FileMinorPart -ne 0 -or $version.FileBuildPart -ne 1 -or $version.FilePrivatePart -ne 0) { throw 'Expected fixed file version 1.0.1.0.' }
-if ($version.ProductMajorPart -ne 1 -or $version.ProductMinorPart -ne 0 -or $version.ProductBuildPart -ne 1 -or $version.ProductPrivatePart -ne 0) { throw 'Expected fixed product version 1.0.1.0.' }
-if ($version.FileVersion -cne '1.0.1.0' -or $version.ProductVersion -cne '1.0.1.0') { throw 'Expected version strings 1.0.1.0.' }
+if ($version.FileMajorPart -ne 1 -or $version.FileMinorPart -ne 0 -or $version.FileBuildPart -ne 2 -or $version.FilePrivatePart -ne 0) { throw 'Expected fixed file version 1.0.2.0.' }
+if ($version.ProductMajorPart -ne 1 -or $version.ProductMinorPart -ne 0 -or $version.ProductBuildPart -ne 2 -or $version.ProductPrivatePart -ne 0) { throw 'Expected fixed product version 1.0.2.0.' }
+if ($version.FileVersion -cne '1.0.2.0' -or $version.ProductVersion -cne '1.0.2.0') { throw 'Expected version strings 1.0.2.0.' }
 if ($version.OriginalFilename -cne '明日方舟：终末地.exe') { throw 'OriginalFilename does not match the published filename.' }
 
 Add-Type -TypeDefinition @'
@@ -163,4 +163,4 @@ $expected = ((Get-Content -LiteralPath (Join-Path $repository 'dist/SHA256SUMS.t
 $actual = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
 if ($actual -cne $expected) { throw 'SHA256SUMS.txt does not match the executable.' }
 Write-Host "Verified x64 GUI format; imports: $($imports -join ', ')"
-Write-Host "Verified all $frameCount official icon frames, version 1.0.1.0, exact OriginalFilename, asInvoker manifest, safe missing-file exit, and SHA-256."
+Write-Host "Verified all $frameCount official icon frames, version 1.0.2.0, exact OriginalFilename, asInvoker manifest, safe missing-file exit, and SHA-256."
