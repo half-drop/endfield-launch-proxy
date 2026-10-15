@@ -1,0 +1,33 @@
+#pragma code_page(65001)
+#include <windows.h>
+
+101 ICON "../assets/endfield.ico"
+
+1 VERSIONINFO
+ FILEVERSION 1,0,1,0
+ PRODUCTVERSION 1,0,1,0
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEFLAGS 0
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404B0"
+        BEGIN
+            VALUE "CompanyName", "half-drop"
+            VALUE "FileDescription", "明日方舟：终末地 启动代理"
+            VALUE "FileVersion", "1.0.1.0"
+            VALUE "InternalName", "EndfieldLaunchProxy"
+            VALUE "OriginalFilename", "明日方舟：终末地.exe"
+            VALUE "ProductName", "Endfield Launch Proxy"
+            VALUE "ProductVersion", "1.0.1.0"
+            VALUE "LegalCopyright", "Independent proxy: MIT; game icon: Hypergryph"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0804, 1200
+    END
+END
